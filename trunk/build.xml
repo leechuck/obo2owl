@@ -1,0 +1,41 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+
+<project name="ExtensionOwlApi" default="jar" basedir="./">
+	<property name="LIB1" value="lib" />
+	
+	<property name="CLASSES" value="bin" />
+
+	<path id="classpath">
+		<fileset dir="${LIB1}">
+			<include name="owlapi-bin.jar" />
+		</fileset>
+		<pathelement location="bin"/>
+	</path>
+
+	<path id="src">
+		<pathelement location="src"/>
+	</path>
+
+	<target name="compile">
+		<javac target="1.5" source="1.5" destdir="${CLASSES}" debug="on" encoding="UTF-8" deprecation="on">
+			<src refid="src"/>
+			<classpath refid="classpath"/>
+			<include name="uk/ac/ebi/owlapi/extension/*.java"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="clean,compile">
+		<jar destfile="obo2owl.jar">
+			<fileset dir="${CLASSES}">
+				<include name="uk/ac/ebi/owlapi/extension/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir="bin" includes="**/*"/>
+		</delete>
+	</target>
+	
+</project>
