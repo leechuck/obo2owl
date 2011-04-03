@@ -21,14 +21,14 @@ public class DefTagValueHandler extends AbstractTagValueHandler {
     }
 
 
-    public void handle(String id, String value) {
+  public void handle(String id, String value, String comment) {
         OWLEntity ent;
         if (getConsumer().isTerm()) {
-            ent = getDataFactory().getOWLClass(getIRIFromValue(id));
+            ent = getDataFactory().getOWLClass(getIdIRI(id));
         } else if (getConsumer().isTypedef()) {
-            ent = getDataFactory().getOWLObjectProperty(getIRIFromValue(id));
+            ent = getDataFactory().getOWLObjectProperty(getIdIRI(id));
         } else {
-            ent = getDataFactory().getOWLNamedIndividual(getIRIFromValue(id));
+            ent = getDataFactory().getOWLNamedIndividual(getIdIRI(id));
         }
         value = normalize(value);
         if (value.endsWith("]") && value.indexOf('[') > 0) {

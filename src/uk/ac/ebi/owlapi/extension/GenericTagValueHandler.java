@@ -23,14 +23,14 @@ public class GenericTagValueHandler extends AbstractTagValueHandler {
     }
 
 
-    public void handle(String id, String value) {
+  public void handle(String id, String value, String comment) {
         OWLEntity ent;
         if (getConsumer().isTerm()) {
-            ent = getDataFactory().getOWLClass(getIRIFromValue(id));
+            ent = getDataFactory().getOWLClass(getIdIRI(id));
         } else if (getConsumer().isTypedef()) {
-            ent = getDataFactory().getOWLObjectProperty(getIRIFromValue(id));
+            ent = getDataFactory().getOWLObjectProperty(getIdIRI(id));
         } else {
-            ent = getDataFactory().getOWLNamedIndividual(getIRIFromValue(id));
+            ent = getDataFactory().getOWLNamedIndividual(getIdIRI(id));
         }
         OWLLiteral con = getDataFactory().getOWLLiteral(value);
         OWLAxiom ax = getDataFactory().getOWLAnnotationAssertionAxiom(getDataFactory().getOWLAnnotationProperty(owlTag.getIRI()), ent.getIRI(), con);
