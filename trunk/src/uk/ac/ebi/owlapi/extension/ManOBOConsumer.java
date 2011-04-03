@@ -1,18 +1,20 @@
 package uk.ac.ebi.owlapi.extension;
 
-import org.coode.owlapi.obo.parser.*;
-import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.CollectionFactory;
-import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
+import org.coode.string.EscapeUtils;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.CollectionFactory;
+import org.coode.owlapi.obo.parser.*;
+
 public class ManOBOConsumer extends OBOConsumer {
+
     private static final Logger logger = Logger.getLogger(OBOConsumer.class.getName());
+
+    private static final String IMPORT_TAG_NAME = "import";
+
+    private OWLOntologyLoaderConfiguration configuration;
 
     private OWLOntologyManager owlOntologyManager;
 
@@ -43,6 +45,45 @@ public class ManOBOConsumer extends OBOConsumer {
     private Map<String, IRI> uriCache;
 
     public HashMap<String, ManOBORelation> relations;
+
+
+  public ManOBOConsumer(OWLOntologyManager owlOntologyManager, OWLOntology ontology, OWLOntologyLoaderConfiguration configuration, HashMap<String, ManOBORelation> _relations) {
+    super(owlOntologyManager, ontology, configuration);
+    this.configuration = configuration;
+    this.relations = _relations;
+    this.owlOntologyManager = owlOntologyManager;
+    this.ontology = ontology;
+    defaultNamespace = OBOVocabulary.ONTOLOGY_URI_BASE;
+    intersectionOfOperands = new HashSet<OWLClassExpression>();
+    unionOfOperands = new HashSet<OWLClassExpression>();
+    uriCache = new HashMap<String, IRI>();
+    loadBuiltinURIs();
+    setupTagHandlers();
+  }
+
+  private void setupTagHandlers() {
+        handlerMap = new HashMap<String, TagValueHandler>();
+        addTagHandler(new OntologyTagValueHandler(this));
+        addTagHandler(new IDTagValueHandler(this));
+        addTagHandler(new NameTagValueHandler(this));
+        addTagHandler(new IsATagValueHandler(this));
+	//        addTagHandler(new PartOfTagValueHandler(this));
+        addTagHandler(new TransitiveTagValueHandler(this));
+        addTagHandler(new SymmetricTagValueHandler(this));
+	//        addTagHandler(new RelationshipTagValueHandler(this));
+	//        addTagHandler(new UnionOfHandler(this));
+	//        addTagHandler(new IntersectionOfHandler(this));
+        addTagHandler(new DisjointFromHandler(this));
+        addTagHandler(new AsymmetricHandler(this));
+        addTagHandler(new InverseHandler(this));
+        addTagHandler(new ReflexiveHandler(this));
+        addTagHandler(new TransitiveOverHandler(this));
+        addTagHandler(new DefaultNamespaceTagValueHandler(this));
+        addTagHandler(new SynonymTagValueHandler(this));
+        addTagHandler(new ManRelationshipTagValueHandler(this, relations));
+        addTagHandler(new ManUnionOfHandler(this, relations));
+        addTagHandler(new ManIntersectionOfHandler(this, relations));
+    }
 
     public OWLOntologyManager getOWLOntologyManager() {
         return owlOntologyManager;
@@ -120,36 +161,6 @@ public class ManOBOConsumer extends OBOConsumer {
     }
 
 
-    private void setupTagHandlers() {
-        handlerMap = new HashMap<String, TagValueHandler>();
-        addTagHandler(new DefTagValueHandler(this));
-        addTagHandler(new GenericTagValueHandler(this, OBOVocabulary.IS_OBSOLETE, OWLRDFVocabulary.OWL_DEPRECATED));
-        addTagHandler(new GenericTagValueHandler(this, OBOVocabulary.XREF, OWLRDFVocabulary.RDFS_SEE_ALSO));
-        addTagHandler(new SynonymTagValueHandler(this, OBOVocabulary.EXACT_SYNONYM));
-        addTagHandler(new SynonymTagValueHandler(this, OBOVocabulary.RELATED_SYNONYM));
-        addTagHandler(new SynonymTagValueHandler(this, OBOVocabulary.BROAD_SYNONYM));
-        addTagHandler(new SynonymTagValueHandler(this, OBOVocabulary.NARROW_SYNONYM));
-        addTagHandler(new SynonymTagValueHandler(this, OBOVocabulary.SYNONYM));
-
-        addTagHandler(new IDTagValueHandler(this));
-        addTagHandler(new NameTagValueHandler(this));
-        addTagHandler(new IsATagValueHandler(this));
-        addTagHandler(new PartOfTagValueHandler(this));
-        addTagHandler(new TransitiveTagValueHandler(this));
-        addTagHandler(new SymmetricTagValueHandler(this));
-        // System.out.println("rel: " + relations);
-        addTagHandler(new ManRelationshipTagValueHandler(this, relations));
-        addTagHandler(new ManUnionOfHandler(this, relations));
-        addTagHandler(new ManIntersectionOfHandler(this, relations));
-        addTagHandler(new DisjointFromHandler(this));
-        addTagHandler(new AsymmetricHandler(this));
-        addTagHandler(new InverseHandler(this));
-        addTagHandler(new ReflexiveHandler(this));
-        addTagHandler(new TransitiveOverHandler(this));
-        addTagHandler(new DefaultNamespaceTagValueHandler(this));
-    }
-
-
     private void addTagHandler(TagValueHandler handler) {
         handlerMap.put(handler.getTag(), handler);
     }
@@ -198,7 +209,8 @@ public class ManOBOConsumer extends OBOConsumer {
         OWLClassExpression equivalentClass;
         if (unionOfOperands.size() == 1) {
             equivalentClass = unionOfOperands.iterator().next();
-        } else {
+        }
+        else {
             equivalentClass = getDataFactory().getOWLObjectUnionOf(unionOfOperands);
         }
         createEquivalentClass(equivalentClass);
@@ -209,7 +221,8 @@ public class ManOBOConsumer extends OBOConsumer {
         OWLClassExpression equivalentClass;
         if (intersectionOfOperands.size() == 1) {
             equivalentClass = intersectionOfOperands.iterator().next();
-        } else {
+        }
+        else {
             equivalentClass = getDataFactory().getOWLObjectIntersectionOf(intersectionOfOperands);
         }
         createEquivalentClass(equivalentClass);
@@ -222,35 +235,43 @@ public class ManOBOConsumer extends OBOConsumer {
     }
 
 
-    public void handleTagValue(String tag, String value) {
+    public void handleTagValue(String tag, String value, String comment) {
         try {
             TagValueHandler handler = handlerMap.get(tag);
             if (handler != null) {
-                handler.handle(currentId, value);
-            } else if (inHeader) {
-                if (tag.equals("import")) {
+                handler.handle(currentId, value, comment);
+            }
+            else if (inHeader) {
+                if (tag.equals(IMPORT_TAG_NAME)) {
                     IRI uri = IRI.create(value.trim());
                     OWLImportsDeclaration decl = owlOntologyManager.getOWLDataFactory().getOWLImportsDeclaration(uri);
-                    owlOntologyManager.makeLoadImportRequest(decl);
+                    owlOntologyManager.makeLoadImportRequest(decl, configuration);
                     owlOntologyManager.applyChange(new AddImport(ontology, decl));
-                } else {
+                }
+                else {
                     // Ontology annotations
                     OWLLiteral con = getDataFactory().getOWLLiteral(value);
                     OWLAnnotationProperty property = getDataFactory().getOWLAnnotationProperty(getIRI(tag));
                     OWLAnnotation anno = getDataFactory().getOWLAnnotation(property, con);
                     owlOntologyManager.applyChange(new AddOntologyAnnotation(ontology, anno));
                 }
-            } else if (currentId != null) {
+            }
+            else if (currentId != null) {
                 // Add as annotation
-                IRI subject = getIRI(currentId);
-                OWLLiteral con = getDataFactory().getOWLLiteral(value);
-                OWLAnnotationProperty property = getDataFactory().getOWLAnnotationProperty(getIRI(tag));
-                OWLAnnotation anno = getDataFactory().getOWLAnnotation(property, con);
-                OWLAnnotationAssertionAxiom ax = getDataFactory().getOWLAnnotationAssertionAxiom(subject, anno);
-                owlOntologyManager.applyChange(new AddAxiom(ontology, ax));
+                if (configuration.isLoadAnnotationAxioms()) {
+                    IRI subject = getIRI(currentId);
+                    OWLLiteral con = getDataFactory().getOWLLiteral(value, "");
+                    OWLAnnotationProperty property = getDataFactory().getOWLAnnotationProperty(getIRI(tag));
+                    OWLAnnotation anno = getDataFactory().getOWLAnnotation(property, con);
+                    OWLAnnotationAssertionAxiom ax = getDataFactory().getOWLAnnotationAssertionAxiom(subject, anno);
+                    owlOntologyManager.addAxiom(ontology, ax);
+                    OWLDeclarationAxiom annotationPropertyDeclaration = getDataFactory().getOWLDeclarationAxiom(property);
+                    owlOntologyManager.addAxiom(ontology, annotationPropertyDeclaration);
+                }
             }
 
-        } catch (UnloadableImportException e) {
+        }
+        catch (UnloadableImportException e) {
             logger.severe(e.getMessage());
         }
     }
@@ -268,60 +289,44 @@ public class ManOBOConsumer extends OBOConsumer {
     public OWLEntity getCurrentEntity() {
         if (isTerm()) {
             return getCurrentClass();
-        } else if (isTypedef()) {
+        }
+        else if (isTypedef()) {
             return getDataFactory().getOWLObjectProperty(getIRI(currentId));
-        } else {
+        }
+        else {
             return getDataFactory().getOWLNamedIndividual(getIRI(currentId));
         }
     }
 
+    public IRI getTagIRI(String tagName) {
+        return getIRI(tagName);
+    }
 
-    public IRI getIRI(String s) {
-        if (s == null) {
-            for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
-                System.out.println(e);
-            }
+    public IRI getIdIRI(String identifier) {
+        if(identifier == null) {
+            Thread.dumpStack();
         }
+        if(identifier.indexOf(":") != -1) {
+            return getIRI(identifier);
+        }
+        else {
+            StringBuilder sb = new StringBuilder();
+            sb.append(defaultNamespace);
+            sb.append(":");
+            sb.append(identifier);
+            return getIRI(sb.toString());
+        }
+    }
+
+    private IRI getIRI(String s) {
         IRI iri = uriCache.get(s);
         if (iri != null) {
             return iri;
         }
-        String localName = s;
-        String namespace = getDefaultNamespace();
-//	        int sepIndex = s.indexOf(':');
-//	        if (sepIndex != -1) {
-        localName = s.replace(':', '_');
-//	            localName = s.substring(sepIndex + 1, localName.length());
-//	        }
-        if (currentNamespace != null) {
-            namespace = currentNamespace;
-        }
-        localName = localName.replace(' ', '-');
-        iri = IRI.create(namespace + localName);
+        String escapedString = s.replace(" ", "%20");
+        iri = OBOVocabulary.ID2IRI(escapedString);
         uriCache.put(s, iri);
-
         return iri;
-    }
-
-
-    public ManOBOConsumer(OWLOntologyManager owlOntologyManager, OWLOntology ontology, HashMap<String, ManOBORelation> _relations) {
-        super(owlOntologyManager, ontology);
-        this.owlOntologyManager = owlOntologyManager;
-        this.ontology = ontology;
-        defaultNamespace = OBOVocabulary.ONTOLOGY_URI_BASE;
-        intersectionOfOperands = new HashSet<OWLClassExpression>();
-        unionOfOperands = new HashSet<OWLClassExpression>();
-        uriCache = new HashMap<String, IRI>();
-        loadBuiltinURIs();
-        this.relations = _relations;
-        setupTagHandlers();
-
-        // System.out.println("rel2: " + this.relations);
-    }
-
-    public HashMap<String, ManOBORelation> getRelations() {
-        System.out.println("rel: " + relations);
-        return relations;
     }
 
 }

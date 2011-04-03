@@ -1,7 +1,7 @@
 package uk.ac.ebi.owlapi.extension;
 
 import org.coode.owlapi.obo.parser.AbstractTagValueHandler;
-import org.coode.owlapi.obo.parser.OBOConsumer;
+//import org.coode.owlapi.obo.parser.OBOConsumer;
 import org.coode.owlapi.obo.parser.OBOVocabulary;
 import org.semanticweb.owlapi.model.*;
 
@@ -15,7 +15,7 @@ import java.util.Set;
  *         Date: 29-Mar-2011
  *         Time: 16:51:25
  */
-public class SynonymTagValueHandler extends AbstractTagValueHandler {
+public class ManSynonymTagValueHandler extends AbstractTagValueHandler {
 
     private OBOVocabulary synonymTag;
     private final Map<OBOVocabulary, OWLLiteral> tagToType = new HashMap<OBOVocabulary, OWLLiteral>();
@@ -26,27 +26,31 @@ public class SynonymTagValueHandler extends AbstractTagValueHandler {
         tagToType.put(OBOVocabulary.RELATED_SYNONYM, getDataFactory().getOWLLiteral("RELATED"));
     }
 
-    public SynonymTagValueHandler(OBOConsumer consumer, OBOVocabulary synonymTag) {
+    public ManSynonymTagValueHandler(ManOBOConsumer consumer, OBOVocabulary synonymTag) {
         super(synonymTag.getName(), consumer);
         this.synonymTag = synonymTag;
     }
 
+    public ManSynonymTagValueHandler(ManOBOConsumer consumer) {
+      this(consumer,null);
+    }
 
-    public void handle(String id, String value) {
+
+  public void handle(String id, String value, String comment) {
         OWLEntity ent;
         if (getConsumer().isTerm()) {
-            ent = getDataFactory().getOWLClass(getIRIFromValue(id));
+            ent = getDataFactory().getOWLClass(getIdIRI(id));
         } else if (getConsumer().isTypedef()) {
-            ent = getDataFactory().getOWLObjectProperty(getIRIFromValue(id));
+            ent = getDataFactory().getOWLObjectProperty(getIdIRI(id));
         } else {
-            ent = getDataFactory().getOWLNamedIndividual(getIRIFromValue(id));
+            ent = getDataFactory().getOWLNamedIndividual(getIdIRI(id));
         }
         OWLLiteral con = getDataFactory().getOWLLiteral(value);
         Set<OWLAnnotation> annotations = new HashSet<OWLAnnotation>();
         OWLLiteral type = tagToType.get(synonymTag);
         if (type != null) {
             annotations.add(getDataFactory().getOWLAnnotation(getDataFactory().getOWLAnnotationProperty(
-                            getConsumer().getIRI("synonym_type")), type));
+                            getConsumer().getTagIRI("synonym_type")), type));
         }
         OWLAxiom ax = getDataFactory().getOWLAnnotationAssertionAxiom(
                 getDataFactory().getOWLAnnotationProperty(OBOVocabulary.SYNONYM.getIRI()),

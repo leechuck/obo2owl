@@ -15,12 +15,17 @@ import org.semanticweb.owlapi.io.AbstractOWLParser;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.*;
 
 
 public class ManOWLOBOParser extends AbstractOWLParser {
 
-    public OWLOntologyFormat parse(OWLOntologyDocumentSource documentSource, OWLOntology ontology) throws OWLParserException, IOException {
+
+    public OWLOntologyFormat parse(OWLOntologyDocumentSource documentSource, OWLOntology ontology) throws OWLParserException, IOException, UnloadableImportException {
+        return parse(documentSource, ontology, new OWLOntologyLoaderConfiguration());
+    }
+
+  public OWLOntologyFormat parse(OWLOntologyDocumentSource documentSource, OWLOntology ontology, OWLOntologyLoaderConfiguration configuration) throws OWLParserException, IOException {
         OBOParser parser;
         Reader reader;
         HashMap<String, ManOBORelation> relations = null;
@@ -37,7 +42,7 @@ public class ManOWLOBOParser extends AbstractOWLParser {
         }
 
         relations = readRelations(reader);
-        parser.setHandler(new ManOBOConsumer(getOWLOntologyManager(), ontology, relations));
+        parser.setHandler(new ManOBOConsumer(ontology.getOWLOntologyManager(), ontology, configuration, relations));
 
         try {
             parser.parse();

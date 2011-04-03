@@ -24,7 +24,7 @@ public class ManUnionOfHandler extends AbstractTagValueHandler {
             id1 = tok.nextToken();
         }
         if (id1 == null) {
-            return getDataFactory().getOWLClass(getIRIFromValue(id0));
+            return getDataFactory().getOWLClass(getIdIRI(id0));
 	    // Use standard pattern if no OWLDEF available; otherwise use OWLDEF pattern
         } else {
 
@@ -40,7 +40,7 @@ public class ManUnionOfHandler extends AbstractTagValueHandler {
 		String toTerm = id1.trim() ;
 		OWLEntityChecker checker = new StupidEntityChecker(getDataFactory(), namespace);
 		
-		OWLObjectProperty prop = getDataFactory().getOWLObjectProperty(getIRIFromValue(id0));
+		OWLObjectProperty prop = getDataFactory().getOWLObjectProperty(getIdIRI(id0));
 		applyChange(new AddAxiom(getOntology(), getDataFactory().getOWLDeclarationAxiom(prop)));
 		
 		String s = relations.get(id0).getOwldef();
@@ -62,15 +62,15 @@ public class ManUnionOfHandler extends AbstractTagValueHandler {
 		}
 		return toClass ;
 	    } else {
-		OWLObjectProperty prop = getDataFactory().getOWLObjectProperty(getIRIFromValue(id0));
-		OWLClass filler = getDataFactory().getOWLClass(getIRIFromValue(id1));
+		OWLObjectProperty prop = getDataFactory().getOWLObjectProperty(getIdIRI(id0));
+		OWLClass filler = getDataFactory().getOWLClass(getIdIRI(id1));
 		return getDataFactory().getOWLObjectSomeValuesFrom(prop, filler);
 	    }
 	}
 	
     }
     
-    public void handle(String id, String value) {
+  public void handle(String id, String value, String comment) {
         getConsumer().addUnionOfOperand(getNewOWLClassOrRestriction(value)) ;
     }
 
