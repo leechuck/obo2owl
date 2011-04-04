@@ -31,10 +31,6 @@ public class ManSynonymTagValueHandler extends AbstractTagValueHandler {
         this.synonymTag = synonymTag;
     }
 
-    public ManSynonymTagValueHandler(ManOBOConsumer consumer) {
-      this(consumer,null);
-    }
-
 
   public void handle(String id, String value, String comment) {
         OWLEntity ent;
