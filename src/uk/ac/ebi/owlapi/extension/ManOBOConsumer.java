@@ -56,7 +56,7 @@ public class ManOBOConsumer extends OBOConsumer {
     this.relations = _relations;
     this.owlOntologyManager = owlOntologyManager;
     this.ontology = ontology;
-    defaultNamespace = OBOVocabulary.ONTOLOGY_URI_BASE;
+    defaultNamespace = OBOVocabulary.OBO_IRI_BASE;
     intersectionOfOperands = new HashSet<OWLClassExpression>();
     unionOfOperands = new HashSet<OWLClassExpression>();
     uriCache = new HashMap<String, IRI>();
@@ -94,7 +94,7 @@ public class ManOBOConsumer extends OBOConsumer {
         addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.RELATED_SYNONYM));
         addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.BROAD_SYNONYM));
         addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.NARROW_SYNONYM));
-        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.SYNONYM));
+        addTagHandler(new ManSynonymTagValueHandler(this, null));
 
 
     }
