@@ -1,12 +1,15 @@
 package uk.ac.ebi.owlapi.extension;
 
-import java.util.*;
-import java.util.logging.Logger;
-
-import org.coode.string.EscapeUtils;
+import org.coode.owlapi.obo.parser.*;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.CollectionFactory;
-import org.coode.owlapi.obo.parser.*;
+import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
 public class ManOBOConsumer extends OBOConsumer {
 
@@ -79,10 +82,21 @@ public class ManOBOConsumer extends OBOConsumer {
         addTagHandler(new ReflexiveHandler(this));
         addTagHandler(new TransitiveOverHandler(this));
         addTagHandler(new DefaultNamespaceTagValueHandler(this));
-        addTagHandler(new SynonymTagValueHandler(this));
         addTagHandler(new ManRelationshipTagValueHandler(this, relations));
         addTagHandler(new ManUnionOfHandler(this, relations));
         addTagHandler(new ManIntersectionOfHandler(this, relations));
+
+        // tag handlers for replacing obo tags with analogous owl ones.
+        addTagHandler(new DefTagValueHandler(this));
+        addTagHandler(new GenericTagValueHandler(this, OBOVocabulary.IS_OBSOLETE, OWLRDFVocabulary.OWL_DEPRECATED));
+        addTagHandler(new GenericTagValueHandler(this, OBOVocabulary.XREF, OWLRDFVocabulary.RDFS_SEE_ALSO));
+        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.EXACT_SYNONYM));
+        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.RELATED_SYNONYM));
+        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.BROAD_SYNONYM));
+        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.NARROW_SYNONYM));
+        addTagHandler(new ManSynonymTagValueHandler(this, OBOVocabulary.SYNONYM));
+
+
     }
 
     public OWLOntologyManager getOWLOntologyManager() {
