@@ -24,11 +24,16 @@ public class ManSynonymTagValueHandler extends AbstractTagValueHandler {
         tagToType.put(OBOVocabulary.BROAD_SYNONYM, getDataFactory().getOWLLiteral("BROAD"));
         tagToType.put(OBOVocabulary.NARROW_SYNONYM, getDataFactory().getOWLLiteral("NARROW"));
         tagToType.put(OBOVocabulary.RELATED_SYNONYM, getDataFactory().getOWLLiteral("RELATED"));
+        tagToType.put(OBOVocabulary.SYNONYM, getDataFactory().getOWLLiteral("RELATED"));
     }
 
     public ManSynonymTagValueHandler(ManOBOConsumer consumer, OBOVocabulary synonymTag) {
-        super(synonymTag.getName(), consumer);
-        this.synonymTag = synonymTag;
+        super(synonymTag == null ? OBOVocabulary.SYNONYM.getName() : synonymTag.getName(), consumer);
+        this.synonymTag = synonymTag == null ? OBOVocabulary.SYNONYM : synonymTag;
+    }
+
+    public ManSynonymTagValueHandler(ManOBOConsumer consumer) {
+        this(consumer, null);
     }
 
 
